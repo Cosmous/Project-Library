@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Odin Library Project</title>
+  <style>
+    
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --border: #e2e8f0;
+    }
+
+    body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 2rem; margin: 0; }
+    .app-header { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 1rem 2rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-radius: 8px; }
+    
+    
+    .library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
+    
+    
+    .book-card { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 0.75rem; }
+    .book-card h3 { margin: 0; font-size: 1.25rem; }
+    .book-card .author { color: #64748b; font-style: italic; margin: 0; }
+    
+    
+    .btn-primary { background: var(--primary); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-danger { background: var(--danger); color: white; border: none; padding: 0.5rem; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: auto; }
+    .btn-danger:hover { background: var(--danger-hover); }
+    .btn-status { background: #e2e8f0; color: var(--text); border: none; padding: 0.5rem; border-radius: 6px; cursor: pointer; font-weight: 500; }
+    .btn-status.read { background: #dcfce7; color: #15803d; }
+
+    
+    dialog { border: none; border-radius: 12px; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); width: 100%; max-width: 350px; }
+    dialog::backdrop { background: rgba(0,0,0,0.4); }
+    form { display: flex; flex-direction: column; gap: 1rem; }
+    form input[type="text"], form input[type="number"] { padding: 0.6rem; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; }
+    .flex-row { display: flex; gap: 0.5rem; align-items: center; }
+    .form-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem; }
+    .btn-cancel { background: none; border: none; cursor: pointer; color: #64748b; }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <h1>📚 Personal Library</h1>
+    <button id="open-modal-btn" class="btn-primary">+ Add New Book</button>
+  </header>
+
+  <main>
+    <div id="library-grid" class="library-grid"></div>
+  </main>
+
+  
+  <dialog id="book-modal">
+    <form id="book-form" method="dialog">
+      <h2 style="margin-top: 0;">Add New Book</h2>
+      
+      <input type="text" id="title" placeholder="Book Title" required>
+      <input type="text" id="author" placeholder="Author Name" required>
+      <input type="number" id="pages" placeholder="Total Pages" min="1" required>
+      
+      <div class="flex-row">
+        <input type="checkbox" id="isRead">
+        <label for="isRead">I have read this book</label>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" id="close-modal-btn" class="btn-cancel">Cancel</button>
+        <button type="submit" class="btn-primary">Save Book</button>
+      </div>
+    </form>
+  </dialog>
+
+  
+  <script>
+    
+    const myLibrary = [];
+
+    
+    function Book(title, author, pages, isRead) {
+      this.title = title;
+      this.author = author;
+      this.pages = pages;
+      this.isRead = isRead;
+    }
+
+    
+    Book.prototype.toggleRead = function() {
+      this.isRead = !this.isRead;
+    };
+
+    
+    function displayBooks() {
+      const grid = document.getElementById('library-grid');
+      grid.innerHTML = ''; 
+
+      myLibrary.forEach((book, index) => {
+        const card = document.createElement('div');
+        card.classList.add('book-card');
+        
+        card.innerHTML = `
+          <h3>${book.title}</h3>
+          <p class="author">by ${book.author}</p>
+          <p>${book.pages} pages</p>
+          <button class="btn-status ${book.isRead ? 'read' : ''}" onclick="toggleBookStatus(${index})">
+            ${book.isRead ? '✅ Read' : '⏳ Not Read Yet'}
+          </button>
+          <button class="btn-danger" onclick="removeBook(${index})">Delete</button>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    
+    function removeBook(index) {
+      myLibrary.splice(index, 1); 
+      displayBooks();             
+    }
+
+    function toggleBookStatus(index) {
+      myLibrary[index].toggleRead(); 
+      displayBooks();                
+    }
+
+    
+    const modal = document.getElementById('book-modal');
+    const openModalBtn = document.getElementById('open-modal-btn');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const bookForm = document.getElementById('book-form');
+
+    
+    openModalBtn.addEventListener('click', () => modal.showModal());
+
+    
+    closeModalBtn.addEventListener('click', () => modal.close());
+
+    
+    bookForm.addEventListener('submit', (e) => {
+      
+      const title = document.getElementById('title').value;
+      const author = document.getElementById('author').value;
+      const pages = document.getElementById('pages').value;
+      const isRead = document.getElementById('isRead').checked;
+
+      
+      const newBook = new Book(title, author, pages, isRead);
+      myLibrary.push(newBook);
+
+      
+      displayBooks();
+      bookForm.reset(); 
+    });
+
+    
+    myLibrary.push(new Book("The Hobbit", "J.R.R. Tolkien", 295, true));
+    myLibrary.push(new Book("Atomic Habits", "James Clear", 320, false));
+    displayBooks();
+  </script>
+</body>
+</html>
